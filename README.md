@@ -147,8 +147,8 @@ generated once on first boot and persisted to `app_data`.
 
 ## License
 
-Cap is licensed under **AGPL-3.0**. This packaging (Dockerfile, entrypoint, Caddyfile,
-manifest) is provided under **AGPL-3.0-or-later** to match — full text in [`LICENSE`](LICENSE).
+Cap remains licensed under **AGPL-3.0**, with the full text in [`LICENSE`](LICENSE). The original Cloud in a Bottle packaging in this repository (Dockerfile, entrypoint, Caddyfile, manifest, and documentation) is available under the **MIT License** in [`LICENSE.packaging`](LICENSE.packaging). Upstream Cap code, copied or adapted upstream material, and third-party components retain their own licenses and copyright notices.
+
 Running this over a network carries AGPL's obligation to offer corresponding source: this
 repo is linked from the app's `description`, and Cap itself is upstream at
 [CapSoftware/cap](https://github.com/CapSoftware/cap).
