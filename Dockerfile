@@ -45,9 +45,17 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && node --version
 
 # MinIO server + Caddy, matched to the host architecture.
+# dl.min.io and MinIO's container images are gone; the official release binaries
+# remain on the (archived) minio/minio GitHub releases, verified by sha256.
+ARG MINIO_RELEASE=RELEASE.2025-09-07T16-13-09Z
 RUN set -eux; \
-    case "$(uname -m)" in x86_64) A=amd64 ;; aarch64) A=arm64 ;; *) echo "unsupported arch $(uname -m)" >&2; exit 1 ;; esac; \
-    curl -fsSL "https://dl.min.io/server/minio/release/linux-${A}/archive/minio.RELEASE.2025-09-07T16-13-09Z" -o /usr/local/bin/minio; \
+    case "$(uname -m)" in \
+      x86_64) A=amd64; MINIO_SHA256=7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f ;; \
+      aarch64) A=arm64; MINIO_SHA256=5c83cd2cf151717ba0243f73e1c7802ff36e272b67144bdd7f1f7d684fd6f03d ;; \
+      *) echo "unsupported arch $(uname -m)" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL "https://github.com/minio/minio/releases/download/${MINIO_RELEASE}/minio.linux-${A}.${MINIO_RELEASE}" -o /usr/local/bin/minio; \
+    echo "${MINIO_SHA256}  /usr/local/bin/minio" | sha256sum -c -; \
     chmod +x /usr/local/bin/minio; /usr/local/bin/minio --version; \
     curl -fsSL "https://github.com/caddyserver/caddy/releases/download/v2.8.4/caddy_2.8.4_linux_${A}.tar.gz" -o /tmp/caddy.tgz; \
     tar -xzf /tmp/caddy.tgz -C /usr/local/bin caddy; rm /tmp/caddy.tgz; caddy version
