@@ -31,9 +31,27 @@ fi
 set -a; . "$SECRETS"; set +a
 
 # Public host the router serves this app at, e.g. cap.<zone-domain>. Needed by
-# both Caddy and the app.
+# both Caddy and the app. On a dev router (or the test harness) the zone domain
+# includes the router's port (e.g. "zone.localhost:8080"); that's correct here.
 CAP_PUBLIC_HOST="${OPENHOST_APP_NAME}.${OPENHOST_ZONE_DOMAIN}"
 export CAP_PUBLIC_HOST
+# The scheme the router serves on: https on real zones, http on a dev router.
+# Routers that predate OPENHOST_ROUTER_PUBLIC_URL get https, as before.
+CAP_PUBLIC_SCHEME="https"
+case "${OPENHOST_ROUTER_PUBLIC_URL:-}" in
+  http://*) CAP_PUBLIC_SCHEME="http" ;;
+esac
+export CAP_PUBLIC_SCHEME
+CAP_PUBLIC_URL="${CAP_PUBLIC_SCHEME}://${CAP_PUBLIC_HOST}"
+
+# The owner's Cap identity: <owner>@cap.<zone-domain>. An email can't carry a
+# port (Cap's env schema rejects it, failing every server path), so use just the
+# hostname there. Real zones have no port, so their email is unchanged.
+OWNER_EMAIL_DOMAIN="${OPENHOST_APP_NAME}.${OPENHOST_ZONE_DOMAIN%:*}"
+if [ "$OWNER_EMAIL_DOMAIN" != "$CAP_PUBLIC_HOST" ]; then
+  log "WARNING: zone domain ${OPENHOST_ZONE_DOMAIN} has a port; using ${OWNER_EMAIL_DOMAIN} for the owner's email"
+fi
+OWNER_EMAIL="${OPENHOST_OWNER_USERNAME:-owner}@${OWNER_EMAIL_DOMAIN}"
 
 # --- MySQL 8 on 127.0.0.1:3306, data on app_data ---
 DATADIR="$APP_DATA/mysql8"
@@ -114,8 +132,8 @@ done
 
 # --- Cap web environment ---
 export DATABASE_URL="mysql://cap:${MYSQL_PASSWORD}@127.0.0.1:3306/cap"
-export WEB_URL="https://${CAP_PUBLIC_HOST}"
-export NEXTAUTH_URL="https://${CAP_PUBLIC_HOST}"
+export WEB_URL="${CAP_PUBLIC_URL}"
+export NEXTAUTH_URL="${CAP_PUBLIC_URL}"
 export NEXTAUTH_SECRET DATABASE_ENCRYPTION_KEY MEDIA_SERVER_WEBHOOK_SECRET
 # Point Cap at the bundled media-server. The webhook URL is Cap's own origin; the
 # media-server calls back to /api/webhooks/media-server/progress with the shared secret.
@@ -127,7 +145,7 @@ export CAP_AWS_ACCESS_KEY="${MINIO_ROOT_USER}"
 export CAP_AWS_SECRET_KEY="${MINIO_ROOT_PASSWORD}"
 # Presigned URLs handed to the browser sign against the public host; server-side
 # reads use the loopback endpoint. See README "How storage + share links work".
-export S3_PUBLIC_ENDPOINT="https://${CAP_PUBLIC_HOST}"
+export S3_PUBLIC_ENDPOINT="${CAP_PUBLIC_URL}"
 export S3_INTERNAL_ENDPOINT="http://127.0.0.1:9000"
 export S3_PATH_STYLE="true"
 export NODE_ENV="production"
@@ -151,7 +169,7 @@ export WORKFLOW_LOCAL_BASE_URL="http://127.0.0.1:3000"
 # (The "Cap Pro" upsell + onboarding are removed in the image itself now — this
 # build has NEXT_PUBLIC_IS_CAP unset, and the seed marks users onboarded.)
 export TRUSTED_PROXY_AUTH_HEADER="x-openhost-is-owner"
-export TRUSTED_PROXY_AUTH_EMAIL="${OPENHOST_OWNER_USERNAME:-owner}@${CAP_PUBLIC_HOST}"
+export TRUSTED_PROXY_AUTH_EMAIL="${OWNER_EMAIL}"
 
 # --- Cap web. Runs migrations + S3 bucket setup itself on boot. ---
 log "starting Cap web — it will run DB migrations and create the S3 bucket"
@@ -169,7 +187,7 @@ APP_PID=$!
 # untouched), and every failure just logs — it must never wedge boot.
 seed_openhost_owner() {
   owner="${OPENHOST_OWNER_USERNAME:-owner}"
-  email="${owner}@${CAP_PUBLIC_HOST}"
+  email="${OWNER_EMAIL}"
   m() { mysql --protocol=tcp -h127.0.0.1 -ucap -p"${MYSQL_PASSWORD}" cap "$@"; }
   i=0
   while [ "$i" -lt 150 ]; do

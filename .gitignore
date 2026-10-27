@@ -6,3 +6,5 @@ node_modules/
 
 # Personal video scripts + blog drafts — kept local, not part of the public packaging repo
 /docs/
+.venv/
+__pycache__/
