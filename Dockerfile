@@ -39,25 +39,35 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Node 24 (glibc) via NodeSource — matches the version Cap's app was built with.
-RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
+# The setup script is fetched at a fixed nodesource/distributions commit and the
+# nodejs package pinned to an exact version; bump NODEJS_VERSION deliberately.
+ARG NODESOURCE_REF=c6e581b0d24e5d043476ddb947d70e6fe10e83c9
+ARG NODEJS_VERSION=24.22.1-1nodesource1
+RUN curl -fsSL "https://raw.githubusercontent.com/nodesource/distributions/${NODESOURCE_REF}/scripts/deb/setup_24.x" -o /tmp/setup_node.sh \
+    && echo "6e3d580f5bd7ccf2aa1e8df8d35c60d78e873c3ff8beb282c9bebd914904ad72  /tmp/setup_node.sh" | sha256sum -c - \
+    && bash /tmp/setup_node.sh && rm /tmp/setup_node.sh \
+    && apt-get install -y --no-install-recommends "nodejs=${NODEJS_VERSION}" \
     && rm -rf /var/lib/apt/lists/* \
     && node --version
 
 # MinIO server + Caddy, matched to the host architecture.
 # dl.min.io and MinIO's container images are gone; the official release binaries
 # remain on the (archived) minio/minio GitHub releases, verified by sha256.
+# Caddy is checked against the sha512 in its release's caddy_2.8.4_checksums.txt.
 ARG MINIO_RELEASE=RELEASE.2025-09-07T16-13-09Z
 RUN set -eux; \
     case "$(uname -m)" in \
-      x86_64) A=amd64; MINIO_SHA256=7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f ;; \
-      aarch64) A=arm64; MINIO_SHA256=5c83cd2cf151717ba0243f73e1c7802ff36e272b67144bdd7f1f7d684fd6f03d ;; \
+      x86_64) A=amd64; MINIO_SHA256=7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f; \
+        CADDY_SHA512=b8bec15d14fb033562af9f207850027bcbaa1f891edc9efe00d38bf39e1bf9944f8b6b8eba041ddd4c171cd70c905174c704d705be2f23bc678fe1eaf37a2485 ;; \
+      aarch64) A=arm64; MINIO_SHA256=5c83cd2cf151717ba0243f73e1c7802ff36e272b67144bdd7f1f7d684fd6f03d; \
+        CADDY_SHA512=5466234be3e988071cef937aedbdd94c15b6f75cf7307397e67c2641219ac9bfe2c2bb3b31fc05bc68d3b6398bbe50abfa16ccf3b127318ccac31115ad26507c ;; \
       *) echo "unsupported arch $(uname -m)" >&2; exit 1 ;; \
     esac; \
     curl -fsSL "https://github.com/minio/minio/releases/download/${MINIO_RELEASE}/minio.linux-${A}.${MINIO_RELEASE}" -o /usr/local/bin/minio; \
     echo "${MINIO_SHA256}  /usr/local/bin/minio" | sha256sum -c -; \
     chmod +x /usr/local/bin/minio; /usr/local/bin/minio --version; \
     curl -fsSL "https://github.com/caddyserver/caddy/releases/download/v2.8.4/caddy_2.8.4_linux_${A}.tar.gz" -o /tmp/caddy.tgz; \
+    echo "${CADDY_SHA512}  /tmp/caddy.tgz" | sha512sum -c -; \
     tar -xzf /tmp/caddy.tgz -C /usr/local/bin caddy; rm /tmp/caddy.tgz; caddy version
 
 # Cap's web app (standalone) lives at /app (server at /app/apps/web/server.js).
