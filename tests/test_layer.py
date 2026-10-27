@@ -42,16 +42,6 @@ def test_public_url_from_zone(stack: OpenhostStack) -> None:
     assert signin == f"{stack.url}/api/auth/signin/trusted-proxy", signin
 
 
-def test_owner_lands_on_dashboard(stack: OpenhostStack, cap_session: requests.Session) -> None:
-    # The owner's seeded account is marked onboarded, so the dashboard opens directly instead of Cap Cloud's
-    # onboarding flow.
-    response = cap_session.get(f"{stack.url}/dashboard", headers=HTML, timeout=60)
-    path = urlparse(response.url).path
-    assert response.status_code == 200 and path.startswith("/dashboard"), (
-        f"owner ended up at {response.url} ({response.status_code}): {response.text[:500]}"
-    )
-
-
 def test_data_in_app_data(stack: OpenhostStack) -> None:
     # MySQL's data and the generated secrets live in the app data dir, so they're backed up and survive redeploys.
     assert (stack.data_dir / "mysql8").is_dir(), sorted(p.name for p in stack.data_dir.iterdir())

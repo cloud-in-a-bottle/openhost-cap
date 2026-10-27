@@ -207,7 +207,7 @@ SQL
     log "OpenHost owner seed skipped (users table never became ready)"
   fi
   # Self-host: skip Cap's onboarding for everyone — no cloud onboarding to do.
-  false && m -e "UPDATE users SET onboarding_completed_at = NOW() WHERE onboarding_completed_at IS NULL" 2>/dev/null \
+  m -e "UPDATE users SET onboarding_completed_at = NOW() WHERE onboarding_completed_at IS NULL" 2>/dev/null \
     && log "marked users onboarded (skips onboarding flow)" || true
 }
 seed_openhost_owner &
