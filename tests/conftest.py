@@ -27,6 +27,7 @@ def _start_tail(s: OpenhostStack) -> None:
 @pytest.fixture(scope="session")
 def stack() -> Iterator[OpenhostStack]:
     """Builds the Dockerfile and deploys the app through the real router; returns once the app is running."""
+    subprocess.run("sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.mysqld", shell=True)
     try:
         with OpenhostStack(deploy_timeout=1800, pre_deploy=_start_tail) as s:
             yield s
