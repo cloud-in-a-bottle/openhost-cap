@@ -53,20 +53,20 @@ RUN curl -fsSL "https://raw.githubusercontent.com/nodesource/distributions/${NOD
 # MinIO server + Caddy, matched to the host architecture.
 # dl.min.io and MinIO's container images are gone; the official release binaries
 # remain on the (archived) minio/minio GitHub releases, verified by sha256.
-# Caddy is checked against the sha512 in its release's caddy_2.8.4_checksums.txt.
+# Caddy is checked against the sha512 in its release's caddy_2.11.7_checksums.txt.
 ARG MINIO_RELEASE=RELEASE.2025-09-07T16-13-09Z
 RUN set -eux; \
     case "$(uname -m)" in \
       x86_64) A=amd64; MINIO_SHA256=7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f; \
-        CADDY_SHA512=b8bec15d14fb033562af9f207850027bcbaa1f891edc9efe00d38bf39e1bf9944f8b6b8eba041ddd4c171cd70c905174c704d705be2f23bc678fe1eaf37a2485 ;; \
+        CADDY_SHA512=a7a433a1b133efc3c8d10eb0b99d52a24b5ef5c322dc77f5282182b1c0402139ab83f3a99f0c52409df77d20123fb0b523edad8a66d8f5e49136197bf61ef0e7 ;; \
       aarch64) A=arm64; MINIO_SHA256=5c83cd2cf151717ba0243f73e1c7802ff36e272b67144bdd7f1f7d684fd6f03d; \
-        CADDY_SHA512=5466234be3e988071cef937aedbdd94c15b6f75cf7307397e67c2641219ac9bfe2c2bb3b31fc05bc68d3b6398bbe50abfa16ccf3b127318ccac31115ad26507c ;; \
+        CADDY_SHA512=3db36ba90c7a6e8dda40ee3dd71fa08844c76b5fb08f61b31e5e78d2ed38e71c51dc7baed875e50d1ca1279196e84302967237386ae87c91ae9f2aaceada682e ;; \
       *) echo "unsupported arch $(uname -m)" >&2; exit 1 ;; \
     esac; \
     curl -fsSL "https://github.com/minio/minio/releases/download/${MINIO_RELEASE}/minio.linux-${A}.${MINIO_RELEASE}" -o /usr/local/bin/minio; \
     echo "${MINIO_SHA256}  /usr/local/bin/minio" | sha256sum -c -; \
     chmod +x /usr/local/bin/minio; /usr/local/bin/minio --version; \
-    curl -fsSL "https://github.com/caddyserver/caddy/releases/download/v2.8.4/caddy_2.8.4_linux_${A}.tar.gz" -o /tmp/caddy.tgz; \
+    curl -fsSL "https://github.com/caddyserver/caddy/releases/download/v2.11.7/caddy_2.11.7_linux_${A}.tar.gz" -o /tmp/caddy.tgz; \
     echo "${CADDY_SHA512}  /tmp/caddy.tgz" | sha512sum -c -; \
     tar -xzf /tmp/caddy.tgz -C /usr/local/bin caddy; rm /tmp/caddy.tgz; caddy version
 
