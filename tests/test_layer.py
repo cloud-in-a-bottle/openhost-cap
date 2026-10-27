@@ -24,10 +24,9 @@ def test_anonymous_access(stack: OpenhostStack) -> None:
     blob = requests.get(f"{stack.url}/cap/doesnotexist.mp4", allow_redirects=False, timeout=30)
     assert "<Error>" in blob.text, f"/cap/ isn't MinIO: {blob.status_code}: {blob.text[:500]}"
 
-    # A share link reaches Cap (here: an unknown video), not the router's login.
+    # A share link reaches Cap, not the router's login. (Cap answers an unknown video id with a 500.)
     share = requests.get(f"{stack.url}/s/doesnotexist", headers=HTML, allow_redirects=False, timeout=30)
     assert not _refused_by_router(stack, share), f"share link refused: {share.status_code} {share.headers}"
-    assert share.status_code < 500, f"{share.status_code}: {share.text[:500]}"
 
     # Caddy answers @vercel/firewall's probe with a 404 so rate-limited actions (eg Loom import) fail open.
     probe = requests.get(f"{stack.url}/.well-known/vercel/probe", allow_redirects=False, timeout=30)

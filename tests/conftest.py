@@ -1,7 +1,6 @@
 import time
 from collections.abc import Iterator
 from http.cookiejar import Cookie
-from http.cookiejar import DefaultCookiePolicy
 
 import pytest
 import requests
@@ -16,14 +15,16 @@ def stack() -> Iterator[OpenhostStack]:
         yield s
 
 
-class _LocalhostIsSecure(DefaultCookiePolicy):
+class _SecureOverHttpJar(requests.cookies.RequestsCookieJar):
     """Sends Secure cookies over http too, as browsers do for http://*.localhost (a secure context).
 
-    Cap's session cookie is always Secure, and the harness serves the app over http.
+    Cap's session cookie is always Secure, and the harness serves the app over http. (A cookie policy whose
+    return_ok_secure allows it isn't enough: the jar still never sends them.)
     """
 
-    def return_ok_secure(self, cookie: Cookie, request: object) -> bool:
-        return True
+    def set_cookie(self, cookie: Cookie, *args: object, **kwargs: object) -> None:
+        cookie.secure = False
+        super().set_cookie(cookie, *args, **kwargs)
 
 
 @pytest.fixture(scope="session")
@@ -38,8 +39,8 @@ def cap_session(stack: OpenhostStack) -> requests.Session:
     # modified below.
     session = requests.Session()
     session.headers.update(stack.owner_session.headers)
+    session.cookies = _SecureOverHttpJar()
     session.cookies.update(stack.owner_session.cookies)
-    session.cookies.set_policy(_LocalhostIsSecure())
     deadline = time.monotonic() + 180
     while True:
         user = None
