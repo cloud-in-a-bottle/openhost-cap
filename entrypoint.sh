@@ -38,7 +38,9 @@ export CAP_PUBLIC_HOST
 # The scheme the router serves on: https on real zones, http on a dev router.
 # Routers that predate OPENHOST_ROUTER_PUBLIC_URL get https, as before.
 CAP_PUBLIC_SCHEME="https"
-# TEMP: always https, to show test_public_url_from_zone fails
+case "${OPENHOST_ROUTER_PUBLIC_URL:-}" in
+  http://*) CAP_PUBLIC_SCHEME="http" ;;
+esac
 export CAP_PUBLIC_SCHEME
 CAP_PUBLIC_URL="${CAP_PUBLIC_SCHEME}://${CAP_PUBLIC_HOST}"
 
