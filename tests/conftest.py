@@ -32,4 +32,6 @@ def stack() -> Iterator[OpenhostStack]:
             yield s
     except BaseException:
         print("APP LOGS:\n" + _logs[0][-20000:])
+        r = subprocess.run("sudo dmesg | grep -i apparmor | tail -20; sudo aa-status | grep -i mysql", shell=True, capture_output=True, text=True)
+        print("DMESG:\n" + r.stdout + r.stderr)
         raise
