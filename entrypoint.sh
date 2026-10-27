@@ -38,7 +38,9 @@ export CAP_PUBLIC_HOST
 # The scheme the router serves on: https on real zones, http on a dev router.
 # Routers that predate OPENHOST_ROUTER_PUBLIC_URL get https, as before.
 CAP_PUBLIC_SCHEME="https"
-# TEMP: always https, to show test_public_url_from_zone fails
+case "${OPENHOST_ROUTER_PUBLIC_URL:-}" in
+  http://*) CAP_PUBLIC_SCHEME="http" ;;
+esac
 export CAP_PUBLIC_SCHEME
 CAP_PUBLIC_URL="${CAP_PUBLIC_SCHEME}://${CAP_PUBLIC_HOST}"
 
@@ -52,7 +54,7 @@ fi
 OWNER_EMAIL="${OPENHOST_OWNER_USERNAME:-owner}@${OWNER_EMAIL_DOMAIN}"
 
 # --- MySQL 8 on 127.0.0.1:3306, data on app_data ---
-DATADIR="/var/lib/cap-mysql8"  # TEMP: show test_data_in_app_data fails
+DATADIR="$APP_DATA/mysql8"
 mkdir -p "$DATADIR" /var/lib/mysql-files
 # Ubuntu's mysqld config sets secure_file_priv=/var/lib/mysql-files; the -core
 # package doesn't create it, so make it (and the datadir/socket dir) exist + owned.
@@ -205,7 +207,7 @@ SQL
     log "OpenHost owner seed skipped (users table never became ready)"
   fi
   # Self-host: skip Cap's onboarding for everyone — no cloud onboarding to do.
-  false && m -e "UPDATE users SET onboarding_completed_at = NOW() WHERE onboarding_completed_at IS NULL" 2>/dev/null \
+  m -e "UPDATE users SET onboarding_completed_at = NOW() WHERE onboarding_completed_at IS NULL" 2>/dev/null \
     && log "marked users onboarded (skips onboarding flow)" || true
 }
 seed_openhost_owner &

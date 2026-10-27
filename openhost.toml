@@ -15,6 +15,7 @@ health_check = "/_healthz"
 # (Loom-style links). Do NOT add "/" here.
 public_paths = [
     "/_healthz",
+    "/s/",           # share page
     "/embed/",       # embeddable player
     "/c/",           # shared collections
     "/cap/",         # S3 objects (presigned/public video blobs) -> MinIO
