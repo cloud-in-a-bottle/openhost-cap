@@ -33,10 +33,10 @@ def test_anonymous_access(stack: OpenhostStack) -> None:
     assert probe.status_code == 404, f"{probe.status_code}: {probe.text[:500]}"
 
 
-def test_public_url_from_zone(stack: OpenhostStack, cap_session: requests.Session) -> None:
+def test_public_url_from_zone(stack: OpenhostStack) -> None:
     # entrypoint.sh builds Cap's public URL (NEXTAUTH_URL, WEB_URL, the presigned S3 endpoint) from the app name, the
     # zone domain (with its port on a dev router) and the router's scheme. NextAuth builds its URLs from it.
-    providers = cap_session.get(f"{stack.url}/api/auth/providers", timeout=30)
+    providers = stack.owner_session.get(f"{stack.url}/api/auth/providers", timeout=30)
     assert providers.status_code == 200, f"{providers.status_code}: {providers.text[:500]}"
     signin = providers.json()["trusted-proxy"]["signinUrl"]
     assert signin == f"{stack.url}/api/auth/signin/trusted-proxy", signin
