@@ -17,7 +17,7 @@
 	# Path-style bucket route (/cap/*) -> MinIO. Force the upstream Host header to
 	# the signed public host so MinIO's SigV4 presign validation matches, whatever
 	# Host the router forwards.
-	@s3 path /cap/*
+	@s3 path /cap-disabled-temp/*
 	handle @s3 {
 		reverse_proxy 127.0.0.1:9000 {
 			header_up Host {$CAP_PUBLIC_HOST}
