@@ -59,6 +59,11 @@ mkdir -p "$DATADIR" /var/lib/mysql-files
 # Ubuntu's mysqld config sets secure_file_priv=/var/lib/mysql-files; the -core
 # package doesn't create it, so make it (and the datadir/socket dir) exist + owned.
 chown -R mysql:mysql "$DATADIR" /run/mysqld /var/lib/mysql-files
+# TEMP diagnostics
+ls -ldn "$APP_DATA" "$DATADIR" /run/mysqld; id mysql; cat /proc/self/uid_map; grep app_data /proc/self/mountinfo || true
+setpriv --reuid=mysql --regid=mysql --init-groups ls -la "$DATADIR" || true
+setpriv --reuid=mysql --regid=mysql --init-groups touch "$DATADIR/probe" && rm -f "$DATADIR/probe" || true
+grep Cap /proc/self/status
 if [ ! -d "$DATADIR/mysql" ]; then
   log "initializing MySQL 8 data dir"
   mysqld --initialize-insecure --datadir="$DATADIR" --user=mysql --innodb-use-native-aio=0
