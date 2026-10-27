@@ -1,5 +1,6 @@
 # Front proxy on the single OpenHost-routed port (:8080). The router terminates
-# TLS and forwards plain HTTP here. {$CAP_PUBLIC_HOST} is injected by entrypoint.sh.
+# TLS and forwards plain HTTP here. {$CAP_PUBLIC_HOST} and {$CAP_PUBLIC_SCHEME} are
+# injected by entrypoint.sh.
 {
 	admin off
 	auto_https off
@@ -36,14 +37,14 @@
 		respond 404
 	}
 
-	# Everything else -> Cap (Next.js). Pin proto + Host to the public HTTPS origin.
+	# Everything else -> Cap (Next.js). Pin proto + Host to the public origin.
 	# Host is set (not just X-Forwarded-Host) because @vercel/firewall builds
 	# https://<Host>/.well-known/vercel/... — with the raw host-mapped port it dies
 	# (ECONNREFUSED); with the real public host it reaches the 404 handler above.
 	handle {
 		reverse_proxy 127.0.0.1:3000 {
 			header_up Host {$CAP_PUBLIC_HOST}
-			header_up X-Forwarded-Proto https
+			header_up X-Forwarded-Proto {$CAP_PUBLIC_SCHEME}
 			header_up X-Forwarded-Host {$CAP_PUBLIC_HOST}
 		}
 	}
