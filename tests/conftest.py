@@ -42,23 +42,27 @@ def cap_session(stack: OpenhostStack) -> requests.Session:
     session.cookies.set_policy(_LocalhostIsSecure())
     deadline = time.monotonic() + 180
     while True:
-        csrf = session.get(f"{stack.url}/api/auth/csrf", timeout=30)
         user = None
-        if csrf.status_code == 200:
-            session.post(
-                f"{stack.url}/api/auth/callback/trusted-proxy",
-                data={"csrfToken": csrf.json()["csrfToken"], "json": "true"},
-                allow_redirects=False,
-                timeout=30,
-            )
-            me = session.get(f"{stack.url}/api/auth/session", timeout=30)
-            # NextAuth returns {} when signed out.
-            user = me.json().get("user") if me.status_code == 200 else None
+        detail = ""
+        try:
+            csrf = session.get(f"{stack.url}/api/auth/csrf", timeout=30)
+            detail = f"GET /api/auth/csrf returned {csrf.status_code}: {csrf.text[:500]}"
+            if csrf.status_code == 200:
+                session.post(
+                    f"{stack.url}/api/auth/callback/trusted-proxy",
+                    data={"csrfToken": csrf.json()["csrfToken"], "json": "true"},
+                    allow_redirects=False,
+                    timeout=30,
+                )
+                me = session.get(f"{stack.url}/api/auth/session", timeout=30)
+                detail = f"GET /api/auth/session returned {me.status_code}: {me.text[:500]}"
+                # NextAuth returns {} when signed out.
+                user = me.json().get("user") if me.status_code == 200 else None
+        except requests.ConnectionError as e:
+            # The app or a kept-alive connection can drop while Cap finishes booting.
+            detail = f"connection error: {e}"
         if user is not None or time.monotonic() > deadline:
             break
         time.sleep(5)
-    assert user is not None, (
-        f"owner isn't signed in (GET /api/auth/csrf returned {csrf.status_code}: {csrf.text[:500]})"
-        f"\n\napp logs:\n{stack.app_logs()[-5000:]}"
-    )
+    assert user is not None, f"owner isn't signed in ({detail})\n\napp logs:\n{stack.app_logs()[-5000:]}"
     return session
