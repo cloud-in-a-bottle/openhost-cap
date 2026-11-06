@@ -69,6 +69,8 @@ oh app logs cap --follow
 
 Or from the dashboard: **Deploy New App** → paste this repo URL.
 
+`openhost.toml` sets `prebuilt_image`, so Cloud in a Bottle pulls our signed prebuilt image (built by CI from each release tag) instead of building the Dockerfile. To fork and modify this app, comment out `prebuilt_image` so your instance builds from source.
+
 Update after pushing changes:
 
 ```bash

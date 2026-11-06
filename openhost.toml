@@ -1,10 +1,13 @@
 [app]
 name = "cap"
-version = "0.1.0"
+version = "1.0.0"
 description = "Cap — open-source Loom, self-contained. Screen recording + shareable links, all on your own compute. Source (AGPL-3.0): https://github.com/CarlKho-Minerva/openhost-cap"
 
 [runtime.container]
 image = "Dockerfile"
+# Cloud in a Bottle pulls this signed prebuilt image (built from the release tag's commit by CI) instead of building
+# `image`. If you fork this app and change it, comment this line out so your instance builds `image` instead.
+prebuilt_image = "registry.cloudinabottle.org/openhost-cap"
 port = 8080
 
 [routing]
