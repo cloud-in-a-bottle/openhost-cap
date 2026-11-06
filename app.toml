@@ -5,9 +5,9 @@
 name = "cap"
 title = "Cap"
 description = "Open-source Loom alternative — record and share screen videos, fully self-hosted."
-repo_url = "https://github.com/CarlKho-Minerva/openhost-cap"
+repo_url = "https://github.com/cloud-in-a-bottle/openhost-cap"
 website_url = "https://cap.so"
-docs_url = "https://github.com/CarlKho-Minerva/openhost-cap#readme"
+docs_url = "https://github.com/cloud-in-a-bottle/openhost-cap#readme"
 tags = ["screen-recording", "video", "loom-alternative", "sharing"]
 categories = ["entertainment", "utility", "data-liberation"]
 # openhost_integration_score intentionally omitted (unrated) for v1. The owner
