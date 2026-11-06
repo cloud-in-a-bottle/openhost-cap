@@ -63,7 +63,7 @@ uv tool install "oh @ git+https://github.com/imbue-openhost/openhost.git#subdire
 oh instance login
 
 # Deploy (first build takes a few minutes — it downloads MinIO + builds the image)
-oh app deploy https://github.com/CarlKho-Minerva/openhost-cap --name cap --wait
+oh app deploy https://github.com/cloud-in-a-bottle/openhost-cap --name cap --wait
 oh app logs cap --follow
 ```
 
